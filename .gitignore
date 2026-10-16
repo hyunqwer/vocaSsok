@@ -1,0 +1,6 @@
+microphone-check.png
+*.log
+vocassok-review-*.json
+.env
+.env.*
+node_modules/
