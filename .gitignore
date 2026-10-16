@@ -1,4 +1,6 @@
 microphone-check.png
+mobile-review.png
+.mobile-review.html
 *.log
 vocassok-review-*.json
 .env

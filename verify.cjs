@@ -8,13 +8,14 @@ function element(id) {
   return elements.get(id);
 }
 const memory = new Map();
+const timers = [];
 class Recognition { start(){this.onstart?.();} abort(){} stop(){} }
 const context = vm.createContext({
   console, structuredClone, Date, Math, JSON, Blob, URL,
   window:{SpeechRecognition:Recognition,isSecureContext:true,addEventListener(){}},
   document:{getElementById:element,querySelectorAll(){return [];},createElement(){return {classList:{add(){}},click(){}};},addEventListener(){},hidden:false},
   localStorage:{getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v)},
-  performance:{now:()=>0},setInterval(){},setTimeout(){return 1;},clearTimeout(){}
+  performance:{now:()=>0},setInterval(){},setTimeout(fn,delay){timers.push({fn,delay});return timers.length;},clearTimeout(){}
 });
 const html = fs.readFileSync('vocabulary_activity.html','utf8');
 vm.runInContext(html.match(/<script>([\s\S]*?)<\/script>/)[1],context);
@@ -82,5 +83,12 @@ assert.equal(run('stage'),'finish');
 assert.equal(run('session.completed'),true);
 assert.equal(run('session.roundIndex'),7);
 assert.equal(run('activeRecords().filter(r=>r.done).length'),39);
+run('start();rec().reading.passed=true;stage="meaning";render();choose(current.meaning,{classList:{add(){}}});choose("wrong",{classList:{add(){}}});');
+assert.equal(run('rec().meaning.attempts'),1);
+assert.equal(timers.at(-1).delay,350);
+timers.at(-1).fn();
+assert.equal(run('current.id'),'loose');
+assert.equal(run('session.items.battery.done'),true);
+console.log('PASS: automatic next word after correct choice, double-tap guard');
 console.log('PASS: five-word round boundaries, explicit continuation, eight rounds, four-word final round, full completion');
 console.log('PASS: 39 words, original quiz separation, independent completion, delayed retry, self-check classification, permission denial, deferral, local save');
